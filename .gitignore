@@ -1,0 +1,14 @@
+node_modules/
+.wrangler/
+worker/node_modules/
+.dev.vars
+wrangler/local/
+worker/wrangler.generated.toml
+_staging/
+staging/
+save/
+*.rmmzsave
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

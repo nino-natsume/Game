@@ -1,0 +1,16 @@
+{
+  "name": "game-hub-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker - Game Hub 总系统(多站点共用用户/存档/管理)",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:config": "wrangler deploy -c wrangler.generated.toml"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.0"
+  }
+}
