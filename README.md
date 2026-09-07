@@ -1,36 +1,109 @@
 # Game Hub
 
-Cloudflare Workers + R2 + D1 多游戏平台。用户系统共用,主页展示所有已添加站点。
+Cloudflare Workers + R2 + D1 多游戏平台。与 enisia 合并:**共用用户数据**(同一 D1 `users` 表),游戏资源/存档(enisia-game-* 桶)原样保留不覆盖。主页展示所有站点。
 
-## 部署
+## 架构速览
 
-1. Cloudflare 创建 API Token(Workers/R2/D1 权限)+ GitHub 仓库 Secrets: `CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`
-2. push 到 main,GitHub Actions 自动部署
-3. 访问域名 → 注册(首个注册用户为管理员)
-4. `/admin` 添加站点
-5. 创建站点 R2 bucket: `wrangler r2 bucket create hub-site-{slug}-assets` / `hub-site-{slug}-saves`
-6. `worker/wrangler.toml` 追加 R2 绑定(见模板注释)
-7. `node scripts/deploy-assets.js --slug {slug} --source "游戏目录"`
-8. 重新部署
+| 数据 | 绑定 | 说明 |
+|------|------|------|
+| 游戏资源 | `GAME_ASSETS` → `enisia-game-assets` | 原 enisia 资源桶,读桶根(js/ data/ img/ ...) |
+| 游戏存档 | `GAME_SAVES` → `enisia-game-saves` | 东档键 `saves/{username}.json` |
+| 用户库 | `DB` → `enisia-users` | 与原 enisia 共用 users/login_attempts 表 |
+
+- 站点 `kind`: `enisia`(复用 enisia-game-* 桶)、`r2`(通用 `{SLUG}_ASSETS`/`{SLUG}_SAVES` 桶)、`external`(外链跳转)
+- 首个注册用户 = 管理员(按 `MIN(created_at)` 判定)
+- 密码 PBKDF2 `pbkdf2$salt$hash`,原 enisia 用户可直接登录
+
+## 一次性准备
+
+1. **Cloudflare API Token**(权限: Workers Scripts 编辑 + R2 + D1 + Workers 路由)
+2. 本机装 wrangler: `npm i -g wrangler`,登录 `wrangler login`
+3. 确保 D1 已存在:`wrangler d1 list` 里能找到 `enisia-users`
+   - 若没有: `wrangler d1 create enisia-users`
+4. 确保 R2 桶存在:
+   - `wrangler r2 bucket create enisia-game-assets`
+   - `wrangler r2 bucket create enisia-game-saves`
+
+## 方式 A: 本机部署(推荐,快速)
+
+```bash
+cd worker
+
+# 1. 生成配置(自动找 D1 database_id 填入 wrangler.toml 占位符)
+node ../scripts/prepare-wrangler.js --auto --out wrangler.generated.toml
+
+# 2. 设置会话密钥(首次必做,常运行只有 ID 不变就一次)
+wrangler secret put SESSION_SECRET
+
+# 3. 应用迁移(users 表已存在会跳过,新增 sites 表)
+wrangler d1 migrations apply enisia-users --remote --dir migrations
+
+# 4. 部署
+wrangler deploy -c wrangler.generated.toml
+```
+
+或一键脚本(自动创建桶/D1/填 ID/设 secret/部署):
+
+```bash
+node scripts/deploy-worker.js --deploy
+```
+
+## 方式 B: GitHub Actions 自动部署
+
+1. `wrangler.toml` 的 `database_id` 占位符不变(脚本会自动填)
+2. push 前确保仓库 Secrets 已配:
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+   - `SESSION_SECRET`(可选,缺省自动生成)
+3. `git push origin main` → Actions 的 `scripts/ci-deploy.sh` 自动完成全部
+
+## 添加新站点(R2 类型)
+
+1. `/admin` 添加站点,选择 `r2` 类型,填 slug/标题/描述/图标
+2. 建桶:
+   - `wrangler r2 bucket create hub-site-{slug}-assets`
+   - `wrangler r2 bucket create hub-site-{slug}-saves`
+3. 在 `wrangler.toml` 追加绑定并重新部署:
+   ```toml
+   [[r2_buckets]]
+   binding = "{SLUG}_ASSETS"
+   bucket_name = "hub-site-{slug}-assets"
+
+   [[r2_buckets]]
+   binding = "{SLUG}_SAVES"
+   bucket_name = "hub-site-{slug}-saves"
+   ```
+4. 上传资源(自动注入 CloudSave.js 云存档插件):
+   ```bash
+   node scripts/deploy-assets.js --slug {slug} --source "游戏目录" --remote cfr2:hub-site-{slug}-assets
+   ```
+
+**enisia 站点**不用新建桶/上传,直接复用 enisia-game-* 桶,`/enisia` 即玩。
 
 ## 目录
 
 ```
 worker/            Worker 源码 + 迁移 + 配置
 plugin/            CloudSave.js 云存档插件
-scripts/           部署脚本
-.github/workflows/ GitHub Actions
+scripts/           部署脚本(deploy-worker / deploy-assets / prepare-wrangler / ci-deploy)
+.github/workflows/ GitHub Actions 自动部署
 ```
 
-## API
+## 路由 / API
 
 ```
-POST /api/register | login | logout        认证
-PUT  /api/password                         改密码
-GET  /api/me                               当前用户
-GET/POST /api/sites                        站点列表/创建(管理员)
-PUT/DELETE /api/sites/:id                  更新/删除(管理员)
-GET/PUT /api/sites/:slug/save              存档读写
-GET  /site/:slug/play                      游戏页
-GET  /site/:slug/assets/*                  站点资源
+GET  /                    主页(可选登录态,右上登录/注册/个人页)
+GET  /login               登录/注册页
+GET  /me                  个人页(改密/退出)
+GET  /admin               站点管理(仅管理员)
+GET  /enisia              原版兼容游戏页
+GET  /enisia/assets/*     原游戏资源(GAME_ASSETS,桶根)
+GET  /enisia/*            资源兜底
+GET/PUT /enisia/api/save  原版存档(GAME_SAVES)
+GET  /{slug}              通用站点游戏页
+GET  /{slug}/assets/*     通用站点资源({SLUG}_ASSETS)
+GET/PUT /{slug}/api/save  通用站点存档({SLUG}_SAVES)
+
+认证: POST /api/register|login|logout · PUT /api/password · GET /api/me
+站点: GET/POST /api/sites · PUT/DELETE /api/sites/:id
 ```
