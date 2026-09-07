@@ -48,6 +48,8 @@ a:hover{text-decoration:underline;}
 .empty{text-align:center;color:var(--text-2);margin-top:100px;font-size:16px;}
 .empty .hint{margin-top:10px;font-size:13px;}
 .footer{background:var(--card);padding:2.5rem 1rem;text-align:center;margin-top:3rem;border-top:1px solid var(--border);color:var(--text-2);font-size:.9rem;}
+  .footer a{color:#ff8fa3;text-decoration:none;font-weight:600;padding:0 2px;}
+  .footer a:hover{text-decoration:underline;}
 .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;}
 .modal-mask.open{display:flex;}
 .modal-card{background:var(--card);border-radius:16px;padding:28px;max-width:360px;width:100%;box-shadow:0 20px 25px -5px rgba(0,0,0,.3),0 10px 10px -5px rgba(0,0,0,.2);position:relative;animation:slideUp .25s ease;}
@@ -141,7 +143,7 @@ export function dashboardHtml(env, url, username, isAdmin, sites) {
     <div class="grid" id="siteGrid">${siteCards || '<div class="empty">暂无游戏<div class="hint">管理员可前往管理页面添加</div></div>'}</div>
     <div class="empty" id="noResults" style="display:none;">没有找到匹配的游戏</div>
   </div>
-  <div class="footer">${escapeHtml(env.HUB_TITLE || "游戏中心")} · Powered by Cloudflare Workers</div>
+  <div class="footer">${escapeHtml(env.HUB_TITLE || "游戏中心")} · Powered by <a href="https://blog.107211.xyz" target="_blank" rel="noopener">夏沐真凉</a> <a href="https://github.com/nino-natsume/eri" target="_blank" rel="noopener">绘里酱</a></div>
 
   <div class="modal-mask" id="authModal">
     <div class="modal-card">
@@ -507,7 +509,13 @@ ${baseHref ? '<base href="' + escapeHtml(baseHref) + '">' : ''}
     }
     function exitFS(){var d=document;(d.exitFullscreen||d.webkitExitFullscreen||d.msExitFullscreen||callNoop).call(d);}
     function fsToggle(){if(isFS())exitFS();else requestFS();}
-    function syncFs(){if(fsBtn){fsBtn.textContent=isFS()?'退出全屏':'全屏';}}
+    function syncFs(){
+      // 触屏设备(手机/平板)全屏时隐藏整行按钮,用设备默认方式退出后本行恢复显示
+      var coarse=window.matchMedia&&matchMedia('(any-pointer: coarse)').matches;
+      var bar=document.getElementById('cloudbar');
+      if(bar)bar.style.display=(coarse&&isFS())?'none':'';
+      if(fsBtn){fsBtn.textContent=isFS()?'退出全屏':'全屏';}
+    }
     document.addEventListener('fullscreenchange',syncFs);
     document.addEventListener('webkitfullscreenchange',syncFs);
     // 进入游戏默认全屏: 加载即请求; 若被浏览器拦截, 首次用户交互(点击/触摸/按键)时立即再请求
