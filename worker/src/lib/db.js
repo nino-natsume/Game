@@ -16,10 +16,25 @@ CREATE TABLE IF NOT EXISTS sites (
     created_at  INTEGER NOT NULL
 );`;
 
+export async function ensureUserColumns(db) {
+    const fields = await db.prepare("PRAGMA table_info(users)").all().then((r) => r.results || []);
+    const has = (name) => fields.some((f) => f.name === name);
+    if (!has("github_id")) {
+        await db.prepare("ALTER TABLE users ADD COLUMN github_id TEXT").run();
+    }
+    if (!has("nickname")) {
+        await db.prepare("ALTER TABLE users ADD COLUMN nickname TEXT").run();
+    }
+    await db.prepare(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_id ON users (github_id) WHERE github_id IS NOT NULL"
+    ).run();
+}
+
 export async function initSchema(db) {
     if (schemaInitialized) return;
     try {
         await db.prepare(SCHEMA_SITES).run();
+        await ensureUserColumns(db);
         await seedEnisia(db);
     } finally {
         schemaInitialized = true;
@@ -50,8 +65,15 @@ export async function seedEnisia(db) {
 
 export async function findUserByUsername(db, username) {
     return db
-        .prepare("SELECT username, pass_hash FROM users WHERE username = ?")
+        .prepare("SELECT username, pass_hash, nickname, github_id, created_at FROM users WHERE username = ?")
         .bind(username)
+        .first();
+}
+
+export async function findUserByGithubId(db, githubId) {
+    return db
+        .prepare("SELECT username, pass_hash, nickname, github_id, created_at FROM users WHERE github_id = ?")
+        .bind(githubId)
         .first();
 }
 
@@ -63,10 +85,17 @@ export async function usernameExists(db, username) {
     return !!row;
 }
 
-export async function insertUser(db, username, passHash) {
+export async function insertUser(db, username, passHash, nickname, githubId) {
     return db
-        .prepare("INSERT INTO users (username, pass_hash, created_at) VALUES (?, ?, ?)")
-        .bind(username, passHash, Date.now())
+        .prepare("INSERT INTO users (username, pass_hash, nickname, github_id, created_at) VALUES (?, ?, ?, ?, ?)")
+        .bind(username, passHash, nickname || null, githubId || null, Date.now())
+        .run();
+}
+
+export async function updateNickname(db, username, nickname) {
+    return db
+        .prepare("UPDATE users SET nickname = ? WHERE username = ?")
+        .bind(nickname, username)
         .run();
 }
 

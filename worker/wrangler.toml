@@ -20,6 +20,11 @@ migrations_dir = "migrations"
 
 [vars]
 HUB_TITLE = "游戏中心"
+GITHUB_CLIENT_ID = "Ov23liPNC4psh46a0hAV"
+# 注意: 若仓库为公开,请把 GITHUB_CLIENT_SECRET 改为使用
+#   wrangler secret put GITHUB_CLIENT_SECRET
+# 并删除下面这行明文,避免密钥泄露。
+GITHUB_CLIENT_SECRET = "f816a4984d023832dbcb5bfeec30bffea56d25eb"
 
 # 可选:远程用户中心代理(一般不需要,默认直接读写共用 D1 用户库)
 # AUTH_PROXY_URL = "https://enisia.107211.xyz"

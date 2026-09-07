@@ -65,7 +65,36 @@ a:hover{text-decoration:underline;}
 .modal-card .ok{color:#10b981;}
 .modal-card .switch{margin-top:12px;text-align:center;font-size:12px;color:var(--text-2);}
 .modal-card .switch a{color:var(--pink-2);cursor:pointer;font-weight:600;}
-`;
+.github-btn{width:100%;margin-top:14px;padding:9px;border:1px solid var(--border);border-radius:8px;background:#fff;color:#24292f;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:all .2s;}
+.github-btn:hover{border-color:#24292f;background:#f6f8fa;}
+.github-btn svg{width:16px;height:16px;}
+.auth-or{display:flex;align-items:center;gap:10px;margin:14px 0 2px;color:var(--text-2);font-size:12px;}
+.auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--border);}
+/* ---------- 响应式: 平板/移动端自适应 ---------- */
+@media (max-width: 900px){
+  .header{padding:12px 16px;gap:10px;}
+  .header .logo{font-size:18px;}
+  .container{padding:20px 14px;}
+}
+@media (max-width: 640px){
+  .header{flex-wrap:wrap;}
+  .header .search{order:3;flex-basis:100%;max-width:100%;}
+  .container{padding:14px 12px;}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+  .site-card{padding:16px 12px;}
+  .site-icon{width:60px;height:60px;}
+  .modal-mask{padding:14px;}
+  .modal-card{padding:20px;border-radius:14px;}
+  .btn{padding:7px 12px;font-size:12px;}
+  .user-chip{font-size:12px;padding:5px 10px;}
+  .profile-wrap{padding:20px 14px;}
+  .footer{padding:1.6rem 1rem;}
+}
+@media (max-width: 480px){
+  .header .logo{font-size:16px;}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+}
+`;  // THEME_CSS END
 
 export function dashboardHtml(env, url, username, isAdmin, sites) {
     const siteCards = (sites || []).map(s => {
@@ -125,6 +154,11 @@ export function dashboardHtml(env, url, username, isAdmin, sites) {
         <button class="btn btn-ghost" id="authAlt" onclick="toggleAuth()">注册</button>
         <button class="btn btn-primary" onclick="doAuth()">登 录</button>
       </div>
+      <div class="auth-or">或</div>
+      <button class="github-btn" onclick="ghLogin()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub 登录
+      </button>
       <div class="msg" id="authMsg"></div>
     </div>
   </div>
@@ -141,6 +175,7 @@ export function dashboardHtml(env, url, username, isAdmin, sites) {
   function authMsg(t,ok){var e=document.getElementById('authMsg');e.className='msg '+(ok?'ok':'err');e.textContent=t;}
   async function doAuth(){var u=document.getElementById('au').value.trim();var p=document.getElementById('ap').value;if(!u||!p)return authMsg('请输入账号和密码',false);try{var r=await fetch('/api/'+(authMode==='login'?'login':'register'),{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({username:u,password:p})});var j=await r.json();if(j.ok){authMsg(authMode==='login'?'登录成功':'注册成功',true);setTimeout(function(){window.location.href=__target;},500);}else authMsg(j.error||'操作失败',false);}catch(e){authMsg('网络错误',false);}}
   function doLogout(){fetch('/api/logout',{method:'POST',credentials:'include'}).then(function(){window.location.href='/';});}
+  function ghLogin(){window.location.href='/api/github/login';}
   document.getElementById('ap').addEventListener('keydown',function(e){if(e.key==='Enter')doAuth();});
 </script>
 </body>
@@ -172,11 +207,17 @@ export function loginPageHtml(env, url) {
         <button class="btn btn-ghost" id="authAlt" onclick="toggleAuth()">注册</button>
         <button class="btn btn-primary" onclick="doAuth()">登 录</button>
       </div>
+      <div class="auth-or">或</div>
+      <button class="github-btn" onclick="ghLogin()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub 登录
+      </button>
       <div class="msg" id="authMsg"></div>
     </div>
   </div>
 <script>
   var authMode='login';
+  function ghLogin(){window.location.href='/api/github/login';}
   function toggleAuth(){authMode=authMode==='login'?'register':'login';document.getElementById('authAlt').textContent=authMode==='login'?'注册':'登录';document.querySelector('.btn-primary').textContent=authMode==='login'?'登 录':'注 册';}
   function authMsg(t,ok){var e=document.getElementById('authMsg');e.className='msg '+(ok?'ok':'err');e.textContent=t;}
   async function doAuth(){var u=document.getElementById('au').value.trim();var p=document.getElementById('ap').value;if(!u||!p)return authMsg('请输入账号和密码',false);try{var r=await fetch('/api/'+(authMode==='login'?'login':'register'),{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({username:u,password:p})});var j=await r.json();if(j.ok){authMsg(authMode==='login'?'登录成功':'注册成功',true);setTimeout(function(){window.location.href='/';},500);}else authMsg(j.error||'操作失败',false);}catch(e){authMsg('网络错误',false);}}
@@ -186,7 +227,8 @@ export function loginPageHtml(env, url) {
 </html>`;
 }
 
-export function profilePageHtml(env, url, username, createdAt, isAdmin) {
+export function profilePageHtml(env, url, username, createdAt, isAdmin, nickname, github) {
+    const displayName = nickname || username;
     return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -199,6 +241,7 @@ export function profilePageHtml(env, url, username, createdAt, isAdmin) {
   .profile-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;box-shadow:var(--shadow);}
   .profile-card .name{font-size:22px;font-weight:800;text-align:center;}
   .badge-admin{display:inline-block;margin-top:6px;padding:3px 12px;border-radius:12px;font-size:12px;font-weight:600;background:linear-gradient(135deg,var(--pink),var(--pink-2));color:#fff;}
+  .badge-github{display:inline-block;margin-top:6px;padding:3px 12px;border-radius:12px;font-size:12px;font-weight:600;background:#f6f8fa;color:#24292f;border:1px solid #e5e7eb;}
   .meta{text-align:center;color:var(--text-2);font-size:13px;margin-top:6px;}
   .sep{border-top:1px solid var(--border);margin:22px 0 4px;}
   .profile-card label{display:block;font-size:12px;color:var(--text-2);margin:12px 0 4px;}
@@ -208,6 +251,9 @@ export function profilePageHtml(env, url, username, createdAt, isAdmin) {
   .msg{margin-top:12px;font-size:12px;text-align:center;min-height:16px;}
   .msg.err{color:#ef4444;}
   .msg.ok{color:#10b981;}
+  .save-row{display:flex;gap:10px;}
+  .save-row .btn{flex:1;margin-top:12px;}
+  @media (max-width:640px){.profile-wrap{padding:16px 12px;}.profile-card{padding:20px 16px;}.avatar{width:70px;height:70px;font-size:28px;}}
 </style>
 </head>
 <body>
@@ -220,9 +266,19 @@ export function profilePageHtml(env, url, username, createdAt, isAdmin) {
   <div class="profile-wrap">
     <div class="avatar">${escapeHtml((username || "?").charAt(0).toUpperCase())}</div>
     <div class="profile-card">
-      <div class="name">${escapeHtml(username)}</div>
-      <div class="meta">注册时间: ${dateText(createdAt)}</div>
-      ${isAdmin ? '<div style="text-align:center"><span class="badge-admin">管理员</span></div>' : ''}
+      <div class="name">${escapeHtml(displayName)}</div>
+      <div class="meta">登录名: ${escapeHtml(username)} · 注册时间: ${dateText(createdAt)}</div>
+      <div style="text-align:center;margin-top:4px;">
+        ${isAdmin ? '<span class="badge-admin">管理员</span> ' : ''}
+        ${github ? '<span class="badge-github">GitHub 账号</span>' : ''}
+      </div>
+      <div class="sep"></div>
+      <label>自定义用户名(显示昵称, 1-24 字符)</label>
+      <div class="save-row">
+        <input id="nick" maxlength="24" value="${escapeHtmlAttr(displayName)}">
+        <button class="btn btn-ghost" onclick="saveNick()">保存</button>
+      </div>
+      <div class="msg" id="nickMsg"></div>
       <div class="sep"></div>
       <label>当前密码</label><input id="oldPw" type="password" autocomplete="current-password">
       <label>新密码</label><input id="newPw" type="password" autocomplete="new-password">
@@ -231,9 +287,12 @@ export function profilePageHtml(env, url, username, createdAt, isAdmin) {
     </div>
   </div>
 <script>
+  function nickMsg(t,ok){var e=document.getElementById('nickMsg');e.className='msg '+(ok?'ok':'err');e.textContent=t;}
+  async function saveNick(){var n=document.getElementById('nick').value.trim();if(!n)return nickMsg('请输入名字',false);try{var r=await fetch('/api/me',{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({nickname:n})});var j=await r.json();if(j.ok){nickMsg('已保存,刷新中…',true);setTimeout(function(){location.reload();},800);}else nickMsg(j.error||'保存失败',false);}catch(e){nickMsg('网络错误',false);}}
   function pwMsg(t,ok){var e=document.getElementById('pwMsg');e.className='msg '+(ok?'ok':'err');e.textContent=t;}
   async function changePw(){var o=document.getElementById('oldPw').value;var n=document.getElementById('newPw').value;if(!o||!n)return pwMsg('请填写完整',false);try{var r=await fetch('/api/password',{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({oldPassword:o,newPassword:n})});var j=await r.json();if(j.ok){pwMsg('密码已修改,请重新登录',true);setTimeout(function(){window.location.href='/login';},1200);}else pwMsg(j.error||'修改失败',false);}catch(e){pwMsg('网络错误',false);}}
   function doLogout(){fetch('/api/logout',{method:'POST',credentials:'include'}).then(function(){window.location.href='/';});}
+  document.getElementById('nick').addEventListener('keydown',function(e){if(e.key==='Enter')saveNick();});
 </script>
 </body>
 </html>`;
@@ -380,19 +439,29 @@ ${baseHref ? '<base href="' + escapeHtml(baseHref) + '">' : ''}
   .modal-card .ok{color:#10b981;}
   .modal-card .filebtn{position:relative;overflow:hidden;}
   .modal-card .filebtn input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-  #rotateOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:#fff;color:#1f2937;font-family:-apple-system,'Segoe UI','Noto Sans SC',sans-serif;text-align:center;padding:30px;flex-direction:column;}
-  #rotateOverlay .phone{font-size:56px;margin-bottom:16px;animation:float 1.6s ease-in-out infinite;}
-  #rotateOverlay h2{font-size:20px;margin-bottom:8px;background:linear-gradient(135deg,#ffb7c5,#ff8fa3);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-  #rotateOverlay p{font-size:13px;color:#6b7280;}
-  @keyframes float{0%,100%{transform:rotate(90deg)}50%{transform:rotate(90deg) translateY(-6px)}}
+  #rotateOverlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:linear-gradient(160deg,#fff 0%,#ffeef3 45%,#ffd7e2 100%);color:#1f2937;font-family:-apple-system,'Segoe UI','Noto Sans SC',sans-serif;text-align:center;padding:30px;flex-direction:column;}
+  #rotateOverlay.open{display:flex;}
+  .rot-scene{position:relative;width:150px;height:150px;margin-bottom:22px;}
+  .rot-halo{position:absolute;inset:10px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,183,197,.55),rgba(255,183,197,0));animation:halo 2.2s ease-in-out infinite;}
+  .rot-phone{position:absolute;top:0;left:50%;transform:translateX(-50%);width:76px;height:132px;border-radius:18px;background:linear-gradient(145deg,#fff,#ffeef2);border:3px solid #ffb7c5;box-shadow:0 14px 30px rgba(255,143,163,.35);animation:galaxy-rotate 2.6s cubic-bezier(.45,.05,.55,.95) infinite;display:flex;align-items:center;justify-content:center;}
+  .rot-phone::before{content:"";position:absolute;top:7px;left:50%;width:22px;height:5px;transform:translateX(-50%);border-radius:4px;background:#ffd7e2;}
+  .rot-phone::after{content:"";width:36px;height:36px;border-radius:50%;background:conic-gradient(from 0deg,#ffb7c5,#ff5c85,#ffb7c5);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));animation:spin 1.1s linear infinite;}
+  @keyframes galaxy-rotate{0%,100%{transform:translateX(-50%) rotate(-30deg) translateY(-3px);}50%{transform:translateX(-50%) rotate(30deg) translateY(5px);}}
+  @keyframes halo{0%,100%{transform:scale(.88);opacity:.55;}50%{transform:scale(1.18);opacity:1;}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #rotateOverlay h2{font-size:22px;font-weight:800;letter-spacing:.5px;background:linear-gradient(135deg,#ff8fa3,#ff5c85);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 10px;animation:fadeUp 1s ease both;}
+  #rotateOverlay p{font-size:14px;color:#9b6b76;margin:0;animation:fadeUp 1s .18s ease both;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  @media (max-width:640px){#cloudbar .site-title{display:none;}#cloudbar{padding:0 8px;}#cloudbar button{padding:4px 8px;font-size:11px;}}
 </style>
 </head>
 <body style="background-color:black">
-  <div id="rotateOverlay"><div class="phone">📱🔄</div><h2>请横屏游玩</h2><p>将设备旋转至横向,获得更好的游戏体验</p></div>
+  <div id="rotateOverlay"><div class="rot-scene"><div class="rot-halo"></div><div class="rot-phone"></div></div><h2>请横屏游玩</h2><p>将设备旋转至横向,获得更好的游戏体验</p></div>
   <div id="cloudbar">
     <a class="back" href="/" style="color:#6b7280;text-decoration:none;font-weight:600;">← 主页</a>
     <span class="site-title">${escapeHtml(gameTitle)}</span>
     <span class="spacer"></span>
+    <button id="fsBtn" onclick="fsToggle()">全屏</button>
     <span class="user">👤 ${escapeHtml(username)}</span>
     <button onclick="openAcct()">账号</button>
     <button onclick="logout()">退出登录</button>
@@ -425,7 +494,20 @@ ${baseHref ? '<base href="' + escapeHtml(baseHref) + '">' : ''}
     async function changePw(){var o=document.getElementById('oldPw').value;var n=document.getElementById('newPw').value;if(!o||!n)return acctMsg('请填写完整',false);try{var r=await fetch('/api/password',{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({oldPassword:o,newPassword:n})});var j=await r.json();if(j.ok){acctMsg('密码已修改,请重新登录',true);setTimeout(function(){window.location.href='/login';},1200);}else acctMsg(j.error||'修改失败',false);}catch(e){acctMsg('网络错误',false);}}
     async function exportSave(){try{var r=await fetch('${saveBase}',{method:'GET',credentials:'include'});var j=await r.json();if(!j.ok)return acctMsg('读取存档失败',false);var blob=new Blob([JSON.stringify(j.data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='${escapeHtml(slug)}-save-${escapeHtml(username)}-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);acctMsg('已导出,请妥善保存到本地',true);}catch(e){acctMsg('网络错误',false);}}
     async function importSave(event){var file=event.target.files[0];if(!file)return;if(!confirm('导入将覆盖云端存档,确定继续?')){event.target.value='';return;}try{var text=await file.text();var data=JSON.parse(text);if(!data||typeof data!=='object'||Array.isArray(data))return acctMsg('文件格式不对',false);var r=await fetch('${saveBase}',{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({data:data})});var j=await r.json();if(j.ok){acctMsg('导入成功,刷新中…',true);setTimeout(function(){location.reload();},1000);}else acctMsg(j.error||'导入失败',false);}catch(e){acctMsg('文件解析失败',false);}event.target.value='';}
-    (function(){var isTouch=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);var ov=document.getElementById('rotateOverlay');function check(){if(isTouch&&window.innerHeight>window.innerWidth){ov.style.display='flex';}else{ov.style.display='none';}}window.addEventListener('resize',check);window.addEventListener('orientationchange',check);check();})();
+    (function(){var isTouch=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);var ov=document.getElementById('rotateOverlay');function check(){if(isTouch&&window.innerHeight>window.innerWidth){ov.classList.add('open');}else{ov.classList.remove('open');}}window.addEventListener('resize',check);window.addEventListener('orientationchange',check);check();})();
+    function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+    function fsToggle(){if(isFS()){(document.exitFullscreen||document.webkitExitFullscreen||callNoop).call(document);}else{requestFS();}}
+    function requestFS(){var el=document.documentElement;var r=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||callNoop;try{r.call(el);}catch(e){}}
+    function callNoop(){}
+    var fsBtn=document.getElementById('fsBtn');
+    function syncFs(){if(fsBtn){fsBtn.textContent=isFS()?'退出全屏':'全屏';}}
+    document.addEventListener('fullscreenchange',syncFs);
+    document.addEventListener('webkitfullscreenchange',syncFs);
+    requestFS();
+    var firstTouch=function(){if(!isFS())requestFS();document.removeEventListener('pointerdown',firstTouch);document.removeEventListener('touchstart',firstTouch);};
+    document.addEventListener('pointerdown',firstTouch);
+    document.addEventListener('touchstart',firstTouch);
+    syncFs();
   </script>
   <script type="text/javascript" src="${assets}/js/plugins/CloudSave.js"></script>
   <script type="text/javascript" src="${assets}/js/main.js"></script>

@@ -3,7 +3,7 @@ import { matchRoute } from "./lib/router.js";
 import { jsonError, corsHeaders, html, SECURITY_HEADERS } from "./lib/http.js";
 import { HttpError, requireUser } from "./lib/session.js";
 
-import { register, login, logout, me, changePassword } from "./handlers/auth.js";
+import { register, login, logout, me, changePassword, updateProfile, githubLogin, githubCallback } from "./handlers/auth.js";
 import { listSitesHandler, createSiteHandler, deleteSiteHandler, updateSiteHandler } from "./handlers/sites.js";
 import { getSave, putSave, getSiteSave, putSiteSave } from "./handlers/save.js";
 import { serveEnisiaAsset, serveEnisiaAny, serveSlugAsset } from "./handlers/assets.js";
@@ -38,8 +38,8 @@ async function profileHandler(request, env, url) {
     try {
         const username = await requireUser(request, env);
         const isAdmin = await isFirstUser(env, username);
-        const row = await env.DB.prepare("SELECT created_at FROM users WHERE username = ?").bind(username).first();
-        return html(profilePageHtml(env, url, username, row?.created_at || null, isAdmin), 200, { "cache-control": "no-store" });
+        const row = await env.DB.prepare("SELECT created_at, nickname, github_id FROM users WHERE username = ?").bind(username).first();
+        return html(profilePageHtml(env, url, username, row?.created_at || null, isAdmin, row?.nickname || username, !!row?.github_id), 200, { "cache-control": "no-store" });
     } catch (err) {
         if (err instanceof HttpError && err.status === 401) {
             return Response.redirect(url.origin + "/login", 302);
@@ -95,7 +95,10 @@ const routes = [
     { method: "POST", path: "/api/login", handler: login },
     { method: "POST", path: "/api/logout", handler: logout },
     { method: "PUT", path: "/api/password", handler: changePassword },
+    { method: "PUT", path: "/api/me", handler: updateProfile },
     { method: "GET", path: "/api/me", handler: me },
+    { method: "GET", path: "/api/github/login", handler: githubLogin },
+    { method: "GET", path: "/api/github/callback", handler: githubCallback },
 
     { method: "GET", path: "/api/sites", handler: listSitesHandler },
     { method: "POST", path: "/api/sites", handler: createSiteHandler },

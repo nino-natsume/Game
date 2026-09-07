@@ -2,6 +2,18 @@
 
 Cloudflare Workers + R2 + D1 多游戏平台。与 enisia 合并:**共用用户数据**(同一 D1 `users` 表),游戏资源/存档(enisia-game-* 桶)原样保留不覆盖。主页展示所有站点。
 
+支持:账号密码注册/登录 · GitHub OAuth 登录 · 自定义用户名(昵称) · 移动端/平板自适应 · 游玩自动全屏 · 横屏动画提示。
+
+## GitHub OAuth 登录
+
+1. 在 GitHub 创建 OAuth App(Settings → Developer settings → OAuth Apps → New OAuth App)
+   - Homepage URL: `https://你的域名/`
+   - **Authorization callback URL: `https://你的域名/api/github/callback`**(必须与此一致)
+2. 配置环境变量(`worker/wrangler.toml` 已预填 client id/secret):
+   - `GITHUB_CLIENT_ID`(可公开)
+   - `GITHUB_CLIENT_SECRET`(建议用 `wrangler secret put GITHUB_CLIENT_SECRET`,仓库公开时务必删除明文)
+3. 部署后登录弹窗/登录页会出现「GitHub 登录」按钮,首次登录自动创建账号,昵称取 GitHub 显示名,可在个人中心修改。
+
 ## 架构速览
 
 | 数据 | 绑定 | 说明 |
@@ -104,6 +116,12 @@ GET  /{slug}              通用站点游戏页
 GET  /{slug}/assets/*     通用站点资源({SLUG}_ASSETS)
 GET/PUT /{slug}/api/save  通用站点存档({SLUG}_SAVES)
 
-认证: POST /api/register|login|logout · PUT /api/password · GET /api/me
+认证: POST /api/register|login|logout · PUT /api/password · GET/PUT /api/me · GET /api/github/login|callback
 站点: GET/POST /api/sites · PUT/DELETE /api/sites/:id
 ```
+
+## 前端交互
+
+- **移动端/平板**: 断点 900px / 640px / 480px 自动调整布局(搜索框换行、卡片栅格、弹窗内边距等)
+- **全屏游玩**: 游戏页自动请求全屏(浏览器限制时在首次点击后再次请求),cloudbar 提供「全屏/退出全屏」按钮;桌面可 Esc 退出,iOS/部分浏览器按设备自带方式退出
+- **横屏提示**: 触屏设备竖屏时显示手机旋转动画(粉白渐变 + 旋转手机 + 光环),横屏自动隐藏
