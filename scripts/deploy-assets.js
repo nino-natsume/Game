@@ -40,8 +40,17 @@ function refreshPathForChildProcess() {
 
 const NEEDED = [
     "css", "js", "data", "dataEx", "effects", "Fonts",
-    "icon", "img", "Audio", "Movies", "Mod", "Dictionaries",
+    "icon", "img", "audio", "movies", "Mod", "Dictionaries",
 ];
+
+// RPG Maker 目录名大小写兼容: audio/Audio、movies/Movies
+function findDir(source, names) {
+    for (const n of names) {
+        const p = path.join(source, n);
+        if (existsSync(p) && statSync(p).isDirectory()) return p;
+    }
+    return null;
+}
 
 function sizeOf(dir) {
     let total = 0;
@@ -88,7 +97,9 @@ function main() {
     rmSync(staging, { recursive: true, force: true });
     mkdirSync(staging, { recursive: true });
     for (const item of NEEDED) {
-        const src = path.join(source, item);
+        let src = path.join(source, item);
+        if (item === "audio") src = findDir(source, ["audio", "Audio"]) || src;
+        else if (item === "movies") src = findDir(source, ["movies", "Movies"]) || src;
         if (existsSync(src)) {
             cpSync(src, path.join(staging, item), { recursive: true });
             console.log(`已复制: ${item}`);

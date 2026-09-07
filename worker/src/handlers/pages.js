@@ -495,18 +495,36 @@ ${baseHref ? '<base href="' + escapeHtml(baseHref) + '">' : ''}
     async function exportSave(){try{var r=await fetch('${saveBase}',{method:'GET',credentials:'include'});var j=await r.json();if(!j.ok)return acctMsg('读取存档失败',false);var blob=new Blob([JSON.stringify(j.data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='${escapeHtml(slug)}-save-${escapeHtml(username)}-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);acctMsg('已导出,请妥善保存到本地',true);}catch(e){acctMsg('网络错误',false);}}
     async function importSave(event){var file=event.target.files[0];if(!file)return;if(!confirm('导入将覆盖云端存档,确定继续?')){event.target.value='';return;}try{var text=await file.text();var data=JSON.parse(text);if(!data||typeof data!=='object'||Array.isArray(data))return acctMsg('文件格式不对',false);var r=await fetch('${saveBase}',{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({data:data})});var j=await r.json();if(j.ok){acctMsg('导入成功,刷新中…',true);setTimeout(function(){location.reload();},1000);}else acctMsg(j.error||'导入失败',false);}catch(e){acctMsg('文件解析失败',false);}event.target.value='';}
     (function(){var isTouch=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);var ov=document.getElementById('rotateOverlay');function check(){if(isTouch&&window.innerHeight>window.innerWidth){ov.classList.add('open');}else{ov.classList.remove('open');}}window.addEventListener('resize',check);window.addEventListener('orientationchange',check);check();})();
-    function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
-    function fsToggle(){if(isFS()){(document.exitFullscreen||document.webkitExitFullscreen||callNoop).call(document);}else{requestFS();}}
-    function requestFS(){var el=document.documentElement;var r=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||callNoop;try{r.call(el);}catch(e){}}
-    function callNoop(){}
     var fsBtn=document.getElementById('fsBtn');
+    function isFS(){return !!(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement);}
+    function callNoop(){}
+    var fsEl=document.documentElement;
+    var fsSupported=!!(fsEl.requestFullscreen||fsEl.webkitRequestFullscreen||fsEl.msRequestFullscreen);
+    function requestFS(){
+      if(!fsSupported)return fsHint();
+      var r=fsEl.requestFullscreen||fsEl.webkitRequestFullscreen||fsEl.msRequestFullscreen;
+      try{var p=r.call(fsEl);if(p&&p.catch)p.catch(function(){});return p;}catch(e){return null;}
+    }
+    function exitFS(){var d=document;(d.exitFullscreen||d.webkitExitFullscreen||d.msExitFullscreen||callNoop).call(d);}
+    function fsToggle(){if(isFS())exitFS();else requestFS();}
     function syncFs(){if(fsBtn){fsBtn.textContent=isFS()?'退出全屏':'全屏';}}
     document.addEventListener('fullscreenchange',syncFs);
     document.addEventListener('webkitfullscreenchange',syncFs);
+    // 进入游戏默认全屏: 加载即请求; 若被浏览器拦截, 首次用户交互(点击/触摸/按键)时立即再请求
     requestFS();
-    var firstTouch=function(){if(!isFS())requestFS();document.removeEventListener('pointerdown',firstTouch);document.removeEventListener('touchstart',firstTouch);};
-    document.addEventListener('pointerdown',firstTouch);
-    document.addEventListener('touchstart',firstTouch);
+    var fsArmed=true;
+    function fsArm(){if(!fsArmed)return;fsArmed=false;if(!isFS())requestFS();}
+    ['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,fsArm,{passive:true});});
+    // 不支持网页全屏的环境(如 iOS Safari)给个提示
+    var fsHintTimer=null;
+    function fsHint(){
+      if(fsHintTimer)return;
+      var d=document.createElement('div');
+      d.textContent='当前浏览器不支持网页全屏,可在浏览器菜单或设备上开启,或添加到主屏幕全屏游玩';
+      d.style.cssText='position:fixed;left:50%;bottom:16%;transform:translateX(-50%);background:rgba(60,20,35,.92);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:99999;max-width:82%;text-align:center;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.25);';
+      document.body.appendChild(d);
+      fsHintTimer=setTimeout(function(){d.remove();fsHintTimer=null;},3500);
+    }
     syncFs();
   </script>
   <script type="text/javascript" src="${assets}/js/plugins/CloudSave.js"></script>
