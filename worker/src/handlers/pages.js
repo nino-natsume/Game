@@ -128,6 +128,11 @@ export function dashboardHtml(env, url, username, isAdmin, sites) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#ff8fa3">
+<link rel="manifest" href="/manifest.json">
 <title>${escapeHtml(env.HUB_TITLE || "游戏中心")}</title>
 <style>${THEME_CSS}</style>
 </head>
@@ -407,14 +412,18 @@ function gameShell(env, url, username, site, assetPrefix, saveBase, cloudApiBase
     return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
 ${baseHref ? '<base href="' + escapeHtml(baseHref) + '">' : ''}
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="viewport" content="user-scalable=no">
-<link rel="icon" href="${assets}/icon/icon.png" type="image/png">
-<link rel="apple-touch-icon" href="${assets}/icon/icon.png">
-<link rel="stylesheet" type="text/css" href="${assets}/css/game.css">
-<title>${escapeHtml(gameTitle)}</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="${escapeHtmlAttr(site.theme_color || '#ff8fa3')}">
+  <meta name="viewport" content="user-scalable=no, viewport-fit=cover">
+  <link rel="icon" href="${assets}/icon/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="${assets}/icon/icon.png">
+  <link rel="manifest" href="/${escapeHtmlAttr(slug)}/manifest.json">
+  <link rel="stylesheet" type="text/css" href="${assets}/css/game.css">
+  <title>${escapeHtml(gameTitle)}</title>
 <style>
   body{margin:0;background:#000;overflow:hidden;}
   #cloudbar{position:fixed;top:0;left:0;right:0;height:38px;z-index:9999;background:#ffffff;color:#1f2937;display:flex;align-items:center;padding:0 14px;gap:10px;font:13px/-apple-system,'Segoe UI','Noto Sans SC',sans-serif;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.08);}

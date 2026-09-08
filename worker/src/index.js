@@ -1,6 +1,6 @@
 import { initSchema, listSites } from "./lib/db.js";
 import { matchRoute } from "./lib/router.js";
-import { jsonError, corsHeaders, html, SECURITY_HEADERS } from "./lib/http.js";
+import { json, jsonError, corsHeaders, html, SECURITY_HEADERS } from "./lib/http.js";
 import { HttpError, requireUser } from "./lib/session.js";
 
 import { register, login, logout, me, changePassword, updateProfile, githubLogin, githubCallback } from "./handlers/auth.js";
@@ -90,6 +90,34 @@ async function playHandler(request, env, url, params) {
 
 const RESERVED = new Set(["api", "login", "me", "admin", "assets", "site", "favicon.ico", "robots.txt"]);
 
+async function hubManifestHandler(_req, env) {
+    const row = await env.DB.prepare("SELECT slug FROM sites WHERE enabled = 1 ORDER BY sort_order ASC, created_at ASC LIMIT 1").first();
+    const icon = row ? `/${row.slug}/assets/icon/icon.png` : "";
+    return json({
+        name: env.HUB_TITLE || "游戏中心",
+        short_name: env.HUB_TITLE || "游戏中心",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#fcfcfc",
+        theme_color: "#ff8fa3",
+        ...(icon ? { icons: [{ src: icon, sizes: "192x192", type: "image/png" }] } : {}),
+    });
+}
+
+async function siteManifestHandler(req, env, url, params) {
+    const site = await env.DB.prepare("SELECT slug, title, theme_color FROM sites WHERE slug = ? AND enabled = 1").bind(params.slug).first();
+    if (!site) return jsonError("Not Found", 404);
+    return json({
+        name: site.title,
+        short_name: site.title,
+        start_url: "/" + site.slug + "/",
+        display: "standalone",
+        background_color: "#000000",
+        theme_color: site.theme_color || "#ff8fa3",
+        icons: [{ src: "/" + site.slug + "/assets/icon/icon.png", sizes: "192x192", type: "image/png" }],
+    });
+}
+
 const routes = [
     { method: "POST", path: "/api/register", handler: register },
     { method: "POST", path: "/api/login", handler: login },
@@ -111,6 +139,7 @@ const routes = [
     { method: "PUT", path: "/enisia/api/save", handler: putSave },
 
     { method: "GET", path: "/", handler: dashboardHandler },
+    { method: "GET", path: "/manifest.json", handler: hubManifestHandler },
     { method: "GET", path: "/login", handler: loginHandler },
     { method: "GET", path: "/me", handler: profileHandler },
     { method: "GET", path: "/admin", handler: adminHandler },
@@ -126,6 +155,7 @@ const routes = [
         handler: async (req, env, url) => {
             const rest = url.pathname.slice("/enisia/".length);
             if (!rest) return playHandler(req, env, url, { slug: "enisia" });
+            if (rest === "manifest.json") return siteManifestHandler(req, env, url, { slug: "enisia" });
             const resp = await serveEnisiaAny(url.pathname, env);
             return resp;
         },
@@ -140,6 +170,10 @@ const routes = [
 
             if (parts[1] === "assets") {
                 return serveSlugAsset(url.pathname, env, seg);
+            }
+
+            if (parts[1] === "manifest.json" && parts.length === 2) {
+                return siteManifestHandler(req, env, url, { slug: seg });
             }
 
             if (parts[1] === "api" && parts[2] === "save" && parts.length === 3) {

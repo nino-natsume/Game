@@ -14,6 +14,10 @@
 
 账号自创即可，记得自行记住账号和密码，本站不支持找回或重置密码
 
+## 客户端
+- Android APK、iOS 原生套壳与 PWA 说明见 `android/README.md`、`ios/README.md`
+- iOS 无证书时：iPhone Safari 打开站点 → 分享 → **添加到主屏幕** 即可全屏游玩
+
 ## 当前不足
 手机端全屏时体验最佳
 
