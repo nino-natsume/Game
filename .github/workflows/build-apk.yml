@@ -139,8 +139,5 @@ jobs:
           if [ -z "$(ls -A assets/)" ]; then echo "::error::No release assets found"; exit 1; fi
           gh release create apk-latest --repo "${{ github.repository }}" \
             --title "次元星域游戏中心" \
-            --notes "自动构建 $(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-- Android: app-release.apk(可直接安装)
-- iOS: 配置签名证书后自动附带 GameCenter.ipa;未配置时见仓库 ios/README.md 手动处理" \
+            --notes "自动构建 $(date -u +%Y-%m-%dT%H:%M:%SZ) | Android: app-release.apk(可直接安装), iOS: 配置签名证书后自动附带 GameCenter.ipa" \
             assets/*
