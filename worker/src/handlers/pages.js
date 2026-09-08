@@ -510,18 +510,25 @@ ${baseHref ? '<base href="' + escapeHtml(baseHref) + '">' : ''}
     function exitFS(){var d=document;(d.exitFullscreen||d.webkitExitFullscreen||d.msExitFullscreen||callNoop).call(d);}
     function fsToggle(){if(isFS())exitFS();else requestFS();}
     function syncFs(){
-      // 触屏设备(手机/平板)全屏时隐藏整行按钮,用设备默认方式退出后本行恢复显示
-      var coarse=window.matchMedia&&matchMedia('(any-pointer: coarse)').matches;
+      // 全屏时隐藏顶栏,让游戏真正“完整全屏”; 退出全屏(按 Esc / 设备系统返回)后自动恢复
       var bar=document.getElementById('cloudbar');
-      if(bar)bar.style.display=(coarse&&isFS())?'none':'';
+      if(bar)bar.style.display=isFS()?'none':'';
       if(fsBtn){fsBtn.textContent=isFS()?'退出全屏':'全屏';}
     }
     document.addEventListener('fullscreenchange',syncFs);
     document.addEventListener('webkitfullscreenchange',syncFs);
+    document.addEventListener('msfullscreenchange',syncFs);
     // 进入游戏默认全屏: 加载即请求; 若被浏览器拦截, 首次用户交互(点击/触摸/按键)时立即再请求
     requestFS();
     var fsArmed=true;
-    function fsArm(){if(!fsArmed)return;fsArmed=false;if(!isFS())requestFS();}
+    function fsArm(e){
+      if(!fsArmed)return;
+      fsArmed=false;
+      // 首次交互若落在“全屏”按钮上,交给按钮自身的 fsToggle 处理,
+      // 避免 pointerdown(fsArm)先进入、click(fsToggle)又立刻退出的“看似没反应/无法完整全屏”bug
+      if(fsBtn && (e.target===fsBtn||(e.target&&fsBtn.contains(e.target))))return;
+      if(!isFS())requestFS();
+    }
     ['pointerdown','touchstart','keydown'].forEach(function(ev){document.addEventListener(ev,fsArm,{passive:true});});
     // 不支持网页全屏的环境(如 iOS Safari)给个提示
     var fsHintTimer=null;
