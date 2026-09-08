@@ -9,7 +9,6 @@ staging/
 save/
 *.rmmzsave
 *.log
-*.apk
 npm-debug.log*
 .DS_Store
 Thumbs.db
