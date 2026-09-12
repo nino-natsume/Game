@@ -14,6 +14,14 @@
 
 账号自创即可，记得自行记住账号和密码，本站不支持找回或重置密码
 
+## 必要 API
+
+| API | 说明 |
+| --- | --- |
+| CLOUDFLARE_ACCOUNT_ID | 账号ID，点击任意域名可复制 |
+| CLOUDFLARE_API_TOKEN | `编辑worker`模板，须有KV、D1、worker编辑、账户信息读取权限 |
+| SESSION_SECRET | 自定义密钥，8~10位最佳 |
+
 ## 当前不足
 手机端全屏时体验最佳
 
